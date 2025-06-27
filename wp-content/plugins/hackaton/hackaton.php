@@ -291,7 +291,6 @@ function he_avaliadores_page()
     $wpdb->insert(
       "{$wpdb->prefix}he_avaliadores",
       [
-        'hackathon_id' => intval($_POST['hackathon_id']),
         'nome'         => sanitize_text_field($_POST['nome']),
         'token'        => $token
       ],
@@ -306,16 +305,6 @@ function he_avaliadores_page()
   echo '<div class="wrap"><h1>Avaliadores</h1>
     <form method="post">';
   wp_nonce_field('he_save_avaliador');
-  echo '
-      <table class="form-table">
-        <tr>
-          <th><label for="hackathon_id">Hackathon</label></th>
-          <td>
-            <select name="hackathon_id" id="hackathon_id" required>
-              <option value="">Selecione...</option>';
-  foreach ($hackathons as $h) {
-    echo "<option value=\"{$h->id}\">{$h->nome}</option>";
-  }
   echo      '</select>
           </td>
         </tr>
@@ -369,13 +358,12 @@ function he_avaliadores_form_shortcode()
     $hackathon_id = intval($_POST['hackathon_id']);
     $nome         = sanitize_text_field($_POST['nome']);
 
-    if (empty($hackathon_id) || empty($nome)) {
-      $output .= '<div class="he-notice he-notice-error"><p>Selecione um hackathon e informe o nome do avaliador.</p></div>';
+    if (empty($nome)) {
+      $output .= '<div class="he-notice he-notice-error"><p>Informe o nome do avaliador.</p></div>';
     } else {
    
       $exists = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}he_avaliadores WHERE hackathon_id = %d AND nome = %s",
-        $hackathon_id,
+        "SELECT COUNT(*) FROM {$wpdb->prefix}he_avaliadores WHERE nome = %s",
         $nome
       ));
       if ($exists) {
@@ -386,7 +374,6 @@ function he_avaliadores_form_shortcode()
         $res = $wpdb->insert(
           "{$wpdb->prefix}he_avaliadores",
           [
-            'hackathon_id' => $hackathon_id,
             'nome'         => $nome,
             'token'        => $token
           ],
@@ -398,7 +385,7 @@ function he_avaliadores_form_shortcode()
             . '</p></div>';
         } else {
           $url = esc_url(site_url("/avaliar/?token={$token}"));
-          $output .= '<div class="he-notice he-notice-success"><p>Avaliador cadastrado! Link de acesso: '
+          $output .= '<div class="he-notice he-noti  ce-success"><p>Avaliador cadastrado! Link de acesso: '
             . '<a href="' . $url . '" target="_blank">' . $url . '</a>'
             . '</p></div>';
         }
@@ -407,20 +394,10 @@ function he_avaliadores_form_shortcode()
   }
 
 
-  $hackathons = $wpdb->get_results(
-    "SELECT id,nome FROM {$wpdb->prefix}he_hackathons ORDER BY nome ASC"
-  );
 
 
   $output .= '<form method="post" class="he-avaliadores-form">';
   $output .= wp_nonce_field('he_avaliadores_form_action', 'he_avaliadores_form_nonce', true, false);
-  $output .= '<p><label for="he_hackathon_id">Hackathon</label><br>
-                <select name="hackathon_id" id="he_hackathon_id" required>
-                  <option value="">– selecione –</option>';
-  foreach ($hackathons as $h) {
-    $output .= "<option value=\"{$h->id}\">" . esc_html($h->nome) . "</option>";
-  }
-  $output .= '</select></p>';
   $output .= '<p><label for="he_nome_avaliador">Nome do Avaliador</label><br>
                 <input name="nome" id="he_nome_avaliador" type="text" required></p>';
   $output .= '<p><button type="submit" name="he_avaliadores_form_submit" class="button">Cadastrar Avaliador</button></p>';
